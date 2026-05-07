@@ -1,0 +1,3940 @@
+{
+  "name": "WF2 - Dr Apple CEO Command Center",
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.query[\"hub.mode\"] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "cond2",
+              "leftValue": "={{ $json.query[\"hub.verify_token\"] }}",
+              "rightValue": "=drappletoken",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "445f5731-36b8-47f1-a8e2-26ae159ab936",
+      "name": "Meta Verify Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1392,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query[\"hub.challenge\"] }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "e7603bb7-a1c4-4d2c-98da-8e7e27a01168",
+      "name": "Respond Meta Challenge",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        -1152,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "phone",
+              "value": "={{ $json.body.entry[0].changes[0].value.messages[0].from }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "name",
+              "value": "={{ $json.body.entry[0].changes[0].value.contacts[0].profile.name }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "message",
+              "value": "={{ $json.body.entry[0].changes[0].value.messages[0].text.body }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "msg_id",
+              "value": "={{ $json.body.entry[0].changes[0].value.messages[0].id }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "msg_type",
+              "value": "={{ $json.body.entry[0].changes[0].value.messages[0].type }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "timestamp",
+              "value": "={{ $json.body.entry[0].changes[0].value.messages[0].timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "msgLower",
+              "value": "={{ $json.body.entry[0].changes[0].value.messages[0].text.body.toLowerCase().trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a8",
+              "name": "wa_biz_id",
+              "value": "={{ $json.body.entry[0].id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d52b1ab4-7fd3-4f12-8fc8-dab3836479d9",
+      "name": "Message Extractor",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -496,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "agent_config",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "key=eq.agent_active"
+      },
+      "id": "f10eeb14-2f18-400e-a602-91941293136d",
+      "name": "Get Agent Config",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        224
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.value }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e22a3f58-6a87-43d9-9a3d-584f3d995791",
+      "name": "Agent Active Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/1043698878825811/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"recipient_type\": \"individual\",\n  \"to\": \"{{ $('Message Extractor').item.json.phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"preview_url\": false,\n    \"body\": \"hi our nnoble customer is are not currently available on this number, please try 08117576726\"\n  }\n}",
+        "options": {}
+      },
+      "id": "8bbaced2-1bfe-426d-ba51-b1e6f0c9043d",
+      "name": "Send Offline Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        32,
+        336
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cs0O7hCKJfRx3vs0",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $('Message Extractor').item.json.phone }}",
+              "rightValue": "2348035061603",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f16bdb1b-94c4-4d7f-b1ca-fe09675b4df4",
+      "name": "CEO Phone Gate",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        32,
+        0
+      ],
+      "notes": "Replace 2348XXXXXXXXX with CEO real WhatsApp number (country code, no + symbol)"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "conversation_memory"
+      },
+      "id": "29566593-a71e-4769-8aec-99f5ad9d1135",
+      "name": "Load Conversation Memory",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        240,
+        208
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "history",
+              "value": "={{ $input.all().map(m => m.json.role.toUpperCase() + ': ' + m.json.message).join('\\n') }}",
+              "type": "string"
+            },
+            {
+              "id": "770526d7-0613-4649-9e16-749b59009c07",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5fb6c7ad-b21b-463a-9d7a-56c2b9c7c9d2",
+      "name": "Format Memory",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "products",
+        "limit": 100,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "stock",
+              "condition": "gte",
+              "keyValue": "1"
+            }
+          ]
+        }
+      },
+      "id": "c84cbaed-d1a9-45c0-82fa-4d0c530fedc4",
+      "name": "Load Product Catalog",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        720,
+        208
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "productContext",
+              "value": "={{ $input.all().map(p =>\n  `[${p.json.id}] ${p.json.name ?? 'Unknown'} | Bran: ${p.json.brand ?? 'N/A'} | Price: ₦${Number(p.json.price ?? 0).toLocaleString()} |  specity: ${p.json.specs ?? 'N/A'} |features: ${p.json.features ?? 'N/A'} | Image: ${p.json.image_url ?? 'N/A'}| ${p.json.description ?? ''} | Stock: ${p.json.in_stock ? 'IN STOCK' : 'OUT OF STOCK'}`\n).join('\\n') }} ",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "539b43c2-10a0-4bbd-abf9-069ad574f77b",
+      "name": "Format Products",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1136,
+        16
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "customers",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "name",
+              "condition": "neq",
+              "keyValue": "={{ $('Message Extractor').item.json.name }}"
+            },
+            {
+              "keyName": "phone",
+              "condition": "neq",
+              "keyValue": "={{ $('Message Extractor').item.json.phone }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $('Message Extractor').item.json.name }}"
+            },
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $('Message Extractor').item.json.phone }}"
+            }
+          ]
+        }
+      },
+      "id": "b22a0ca4-392e-4df0-b434-2721f4b6bc73",
+      "name": "Upsert Customer",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1504,
+        208
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "phone",
+              "value": "={{ $('Message Extractor').item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "name",
+              "value": "={{ $('Message Extractor').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "message",
+              "value": "={{ $('Message Extractor').item.json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "history",
+              "value": "={{ $('Code in JavaScript1').item.json.history }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "productContext",
+              "value": "={{ $('Code in JavaScript').item.json.productContext }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d61c4fd6-7376-486a-a6d6-4f958f32bc75",
+      "name": "Build AI Context",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://YOUR_SUPABASE_URL/rest/v1/requests",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "parametersHeaders": {
+          "values": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "parametersBody": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "id": "4f7f8047-5830-4c6a-9e54-12ccc8ef02d5",
+      "name": "Tool: log_request",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        2240,
+        400
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "=https://YOUR_SUPABASE_URL/rest/v1/invoices?customer_phone=eq.{{ $('Build AI Context').item.json.phone }}&order=created_at.desc&limit=5",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "parametersHeaders": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "id": "e606115a-1a01-4499-ba9b-f64aa7da9f7b",
+      "name": "Tool: get_invoice",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        2384,
+        480
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "##ESCALATE:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "cond2",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "##CEO_NOTIFY:",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "a77dbc69-dd91-493c-94cc-00f71bd20e5d",
+      "name": "Escalation Detector",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const output = $input.item.json.output;\n\nconst escMatch  = output.match(/##ESCALATE:([^#]+)##/);\nconst ceoMatch  = output.match(/##CEO_NOTIFY:([^#]+)##/);\n\nconst cleanReply = output\n  .replace(/##ESCALATE:[^#]+##/g, '')\n  .replace(/##CEO_NOTIFY:[^#]+##/g, '')\n  .trim();\n\nlet tagType = 'none';\nlet tagReason = '';\nlet productNeeded = '';\n\nif (ceoMatch) {\n  const parts = ceoMatch[1].split(':');\n  tagType       = 'ceo_notify';\n  tagReason     = parts[0].trim();\n  productNeeded = parts[1] ? parts[1].trim() : '';\n} else if (escMatch) {\n  tagType   = 'escalate';\n  tagReason = escMatch[1].trim();\n}\n\nreturn {\n  json: {\n    ...$input.item.json,\n    tagType,\n    tagReason,\n    productNeeded,\n    cleanReply\n  }\n};"
+      },
+      "id": "bccb7013-b566-4a2b-99fa-355246ded1a7",
+      "name": "Tag Parser",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond1",
+              "leftValue": "={{ $json.tagType }}",
+              "rightValue": "ceo_notify",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "c3376118-36c5-4331-aaf9-fe73a2acb439",
+      "name": "Route Tag Type",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2944,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "requests",
+        "filterType": "string",
+        "filterString": "customer_phone=eq.{{ $('Build AI Context').item.json.phone }}&status=eq.open",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "ceo_notified"
+            },
+            {
+              "fieldId": "ceo_notified",
+              "fieldValue": "true"
+            },
+            {
+              "fieldId": "request_type",
+              "fieldValue": "out_of_stock"
+            },
+            {
+              "fieldId": "product_interest",
+              "fieldValue": "={{ $json.productNeeded }}"
+            }
+          ]
+        }
+      },
+      "id": "550d3f42-3493-40bd-a36e-3bbe446ecc23",
+      "name": "Update Request CEO Notify",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3168,
+        -32
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "899173c9-c6a8-43c7-a94d-72e94d0790fb",
+      "name": "Send CEO Stock Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3376,
+        -32
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "requests",
+        "filterType": "string",
+        "filterString": "customer_phone=eq.{{ $('Build AI Context').item.json.phone }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "escalated"
+            },
+            {
+              "fieldId": "escalation_reason",
+              "fieldValue": "={{ $json.tagReason }}"
+            }
+          ]
+        }
+      },
+      "id": "26dcfbb1-c3dc-47f9-bf02-8cbe1d15a2b6",
+      "name": "Update Request Escalation",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3168,
+        208
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "d3216862-bf53-45a8-97f8-3daa338a5404",
+      "name": "Notify Sales Rep",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3376,
+        208
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "finalReply",
+              "value": "={{ $json.output.replace(/##ESCALATE:[^#]+##/g, '').replace(/##CEO_NOTIFY:[^#]+##/g, '').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "502d097d-daaa-458e-83f5-a3ff18522fe8",
+      "name": "Strip Tags - Clean Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2720,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "finalReply",
+              "value": "={{ $json.cleanReply }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e255eb55-bd7a-42af-addf-00ae5574cfe4",
+      "name": "Strip Tags - After Escalation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        3600,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": "={{ false }}",
+        "fieldsToMatchString": "phone",
+        "mergeByFields": {
+          "values": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "id": "4d1a80f7-21c3-4bd9-ae0b-e46c184a0508",
+      "name": "Merge Paths",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3984,
+        -16
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "tableId": "conversation_memory",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $('Message Extractor').item.json.phone }}"
+            },
+            {
+              "fieldId": "role",
+              "fieldValue": "user"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "={{ $('Message Extractor').item.json.message }}"
+            }
+          ]
+        }
+      },
+      "id": "d5641509-c165-4d37-a933-de9dc80a660c",
+      "name": "Save Memory - User",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4256,
+        96
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "conversation_memory",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "phone",
+              "fieldValue": "={{ $('Message Extractor').item.json.phone }}"
+            },
+            {
+              "fieldId": "role",
+              "fieldValue": "assistant"
+            },
+            {
+              "fieldId": "message",
+              "fieldValue": "={{ $('Strip Tags - Clean Reply').item.json.finalReply }}"
+            }
+          ]
+        }
+      },
+      "id": "2c2ad8a2-bc60-4208-bf9e-27b5d491b2e3",
+      "name": "Save Memory - Assistant",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        4256,
+        336
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://YOUR_SUPABASE_URL/rest/v1/products?in_stock=eq.true&limit=10",
+        "sendQuery": true,
+        "parametersQuery": {
+          "values": [
+            {}
+          ]
+        },
+        "sendHeaders": true,
+        "parametersHeaders": {
+          "values": [
+            {}
+          ]
+        }
+      },
+      "id": "60d9d195-434d-4b1b-8ca1-e8eb9be17456",
+      "name": "Tool: search_products",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        416
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatapp",
+        "options": {
+          "responseCode": {
+            "values": {}
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -944,
+        272
+      ],
+      "id": "e41bc26b-162f-4918-acc1-d27d62a9cf60",
+      "name": "Webhook",
+      "webhookId": "af99a606-08ee-42bb-bb6a-dc19328ec931"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "53df4851-4636-4333-a883-ab2e2dadc28b",
+              "leftValue": "={{ $json.body.entry[0].changes[0].value.messages }}",
+              "rightValue": "",
+              "operator": {
+                "type": "array",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -736,
+        272
+      ],
+      "id": "e5d33e27-ffc0-42f0-bd99-6809769fa0f1",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect ALL product rows into one grouped string\nconst products = $input.all();\n\n// Build structured JSON array\nconst productJson = products.map(item => {\n  const p = item.json;\n  return {\n    id:          p.id          || null,\n    name:        p.name        || 'Unknown',\n    brand:       p.brand       || 'N/A',\n    price:       p.price       ? Number(p.price) : 0,\n    priceFormatted: p.price    ? '₦' + Number(p.price).toLocaleString() : 'N/A',\n    features:    p.features    || 'N/A',\n    specs:       p.specs       || 'N/A',\n    description: p.description || '',\n    inStock:     p.stock       ? true : false,\n    stockLabel:  p.stock       ? 'IN STOCK' : 'OUT OF STOCK'\n  };\n});\n\n// Build readable string for AI prompt\nconst productContext = productJson.map(p => {\n  return `[${p.id}] ${p.name} | Brand: ${p.brand} | Price: ${p.priceFormatted} | Features: ${p.features} | Specs: ${p.specs} | ${p.description} | Stock: ${p.stockLabel}`;\n}).join('\\n');\n\nreturn [{\n  json: {\n    productContext:     productContext,\n    productContextJson: productJson,\n    totalProducts:      productJson.length,\n    inStockCount:       productJson.filter(p => p.inStock).length,\n    outOfStockCount:    productJson.filter(p => !p.inStock).length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1104,
+        208
+      ],
+      "id": "cb3b355a-5693-4613-aede-031ef2552d84",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all();\n\nif (rows.length === 0) {\n  return [{ json: { history: '' } }];\n}\n\nconst history = rows\n  .filter(item => item.json && item.json.role && item.json.message)\n  .map(item => item.json.role.toUpperCase() + ': ' + item.json.message)\n  .join('\\n');\n\nreturn [{ json: { history: history } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        208
+      ],
+      "id": "86f04179-d810-4640-b21d-5346f0a9649d",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f69506b0-f9a1-4eab-8499-e57c9dbdaf2d",
+              "leftValue": "={{ $input.all().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        336,
+        384
+      ],
+      "id": "3628e63e-729b-4761-b49e-3f6081a262fe",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7c3ee274-7a2b-41b9-a6d1-8ae607537511",
+              "name": "histrory",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        656,
+        400
+      ],
+      "id": "a9c8d55d-a4cd-4481-9e86-63191631bfc0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch"
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        832,
+        368
+      ],
+      "id": "a2f3d5db-c860-45ad-b214-4f119553f009",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message }}",
+        "options": {
+          "systemMessage": "=═══════════════════════════════════════════════════════\nSTORE IDENTITY\n═══════════════════════════════════════════════════════\nYou are \"Malam AI\" — the intelligent, warm sales assistant for\nDR. APPLE PHONE STORE, Farm Centre Market, Kano, Nigeria.\n\nYou are like a trusted Hausa market man who genuinely knows\nevery phone like the back of his hand. You are knowledgeable,\npatient, honest, and never pushy. Every customer who talks\nto you should feel welcomed and respected.\n\n═══════════════════════════════════════════════════════\nLANGUAGE DETECTION — CRITICAL, ALWAYS FOLLOW\n═══════════════════════════════════════════════════════\nDetect the customer's language from their very first message.\nMaintain that SAME language for the ENTIRE conversation.\n\nHAUSA — detected by words like: sannu, ina, kana, nawa, wane,\n  don allah, wayar, yaya, kuna, zo, samu, nuna, yana:\n  → Reply fully in Hausa throughout.\n  → First greeting: \"Sannu da zuwa Dr. Apple Phone Store! 🍎\n    Yaya zan taimake ku yau, Alhaji/Hajiya?\"\n\nPIDGIN — detected by words like: wetin, abeg, how much, e dey,\n  na so, oga, bros, sis, make I, no be, fit, dey:\n  → Reply in Nigerian Pidgin throughout.\n  → First greeting: \"Welcome to Dr. Apple Phone Store! 🍎\n    Wetin I fit do for you today, boss?\"\n\nENGLISH — everything else, or mixed formal writing:\n  → Reply in warm, friendly English throughout.\n  → First greeting: \"Welcome to Dr. Apple Phone Store! 🍎\n    How can I help you today?\"\n\nMIXED LANGUAGE: Mirror exactly the blend the customer uses.\nAddress customers as: Oga, Aunty, Alhaji, Hajiya, Boss,\nMy Customer — based on context clues in how they write.\n\n═══════════════════════════════════════════════════════\nPERSONALITY RULES — ALWAYS ON\n═══════════════════════════════════════════════════════\n✅ Warm like a Kano market man who knows his regulars\n✅ Knowledgeable — you have the full product catalog\n✅ Honest — never hide stock status or limitations\n✅ Patient — never rush a customer into buying\n✅ Use emojis moderately: 📱 💰 ✅ 🎨 💾 📸 🙏 😊\n✅ Keep replies concise — WhatsApp is not email\n✅ If a customer seems unsure, offer to help them choose\n\n═══════════════════════════════════════════════════════\nSALES FLOW — FOLLOW THESE STEPS IN ORDER\n═══════════════════════════════════════════════════════\nSTEP 1 — GREET (first message from this customer only)\n  Send the warm greeting in their detected language.\n  Never greet again once the conversation is ongoing.\n\nSTEP 2 — UNDERSTAND THE NEED\n  If they haven't told you what they want, ask:\n  - What type of device? (Phone, Laptop, iWatch, Accessory?)\n  - Rough budget? (helps narrow choices)\n  - Brand preference? (iPhone, Samsung, Google Pixel, other?)\n  - Most important feature? (camera, battery, storage, color?)\n  Ask maximum 2 questions at once — don't overwhelm them.\n\nSTEP 3 — SEARCH AND PRESENT PRODUCTS\n  Use the search_products tool to find the best matches.\n  If the product is already in the injected catalog, use that.\n  Present results clearly using this format every time:\n\n  📱 [Product Name]\n  💰 Price: ₦[price formatted with commas]\n  🎨 Colors: [list colors]\n  💾 Storage: [list options]\n  📸 [Most impressive spec, e.g. \"48MP Triple Camera\"]\n  ✅ In Stock — Ready for pickup!\n  (or)\n  ❌ Currently out of stock\n\n  If multiple products match, list up to 3 options.\n  Ask which one interests them most.\n\nSTEP 4 — HANDLE OUT OF STOCK\n  If a product is not available:\n  a) Apologise warmly in their language\n  b) Call the log_request tool — type: \"out_of_stock\"\n  c) Place this tag at the END of your reply:\n     ##CEO_NOTIFY:out_of_stock:[product_name]:[customer_phone]##\n  d) Immediately suggest the closest available alternative\n\n  Hausa:   \"Hakuri, wannan samfurin bai samuwa yanzu ba. Amma muna da wani mai kyau...\"\n  Pidgin:  \"Abeg sorry, this one don finish for store. But I get another good one...\"\n  English: \"I'm sorry, that item is currently out of stock. Let me suggest something similar...\"\n\nSTEP 5 — BUILD ORDER AND CONFIRM BUY INTENT\n  When customer confirms they want to buy:\n  a) Ask for final confirmation: which color? which storage?\n  b) Display a clear order summary:\n     ✅ ORDER SUMMARY\n     Product: [name]\n     Variant: [color] / [storage]\n     Price: ₦[total]\n  c) Tell them: \"Our team will contact you shortly with payment and pickup details\"\n  d) Call log_request tool — type: \"buy_intent\"\n  e) Add at end of reply: ##ESCALATE:buy_confirmed##\n\n═══════════════════════════════════════════════════════\nHARD LIMITS — NEVER CROSS THESE LINES\n═══════════════════════════════════════════════════════\n❌ NEVER negotiate or reduce any price\n❌ NEVER confirm that a payment was received\n❌ NEVER give delivery time commitments\n❌ NEVER handle returns, complaints, or refunds\n❌ NEVER share any staff or personal phone numbers\n❌ NEVER discuss topics outside the store's products/services\n\nWhen any of these come up, respond warmly and escalate:\n  Hausa:   \"Don wannan, bari in haɗa ku da ƙungiyarmu. Za su taimake ku! 🙏\"\n  Pidgin:  \"For this one, make I connect you with our team. Dem go sort you out well! 🙏\"\n  English: \"Let me connect you with our team directly for this. They'll assist you! 🙏\"\nThen place at end of message: ##ESCALATE:[reason]##\n\nESCALATION REASONS (choose the most specific):\n  negotiation | payment | refund | complaint | bulk_order | custom_contract | abuse\n\n═══════════════════════════════════════════════════════\nAVAILABLE TOOLS — USE THEM PROACTIVELY\n═══════════════════════════════════════════════════════\nsearch_products  — Search DB when customer asks about a product\nlog_request      — Log every inquiry, buy intent, out-of-stock, escalation\nget_invoice      — Fetch customer's past invoices when they ask\n\n═══════════════════════════════════════════════════════\nRUNTIME CONTEXT — INJECTED EVERY MESSAGE\n═══════════════════════════════════════════════════════\nCONVERSATION HISTORY (last 20 messages):\n{{ $json.history }}\n\nCUSTOMER NAME:   {{ $json.name }}\nCUSTOMER PHONE:  {{ $json.phone }}\n\nCURRENT PRODUCT CATALOG (in-stock only):\n{{ $json.productContext }}\n═══════════════════════════════════════════════════════",
+          "maxIterations": 10
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2016,
+        208
+      ],
+      "id": "5d404c6f-c4b6-45be-a57e-694e4767fb53",
+      "name": "AI Agent1",
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        2272,
+        560
+      ],
+      "id": "491b4e6c-e2da-4ed5-99bd-8bcf6832ae19",
+      "name": "HTTP Request",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "products",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "name",
+              "condition": "ilike",
+              "keyValue": "={{ $('Load Product Catalog', 'product name the customer asked for, e.g. iPhone 15').item.json.name }}"
+            },
+            {
+              "keyName": "brand",
+              "condition": "ilike",
+              "keyValue": "={{ $('Load Product Catalog', 'brand name e.g. Apple, Samsung, Google').item.json.brand }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        640
+      ],
+      "id": "235f481b-61c6-4302-a99c-e5ec9528fb82",
+      "name": "search_products",
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get a row in Supabas\"Fetch invoice or receipt records for this customer from the invoices table. Use when the customer asks about their receipt, order history, previous purchase, or invoice status",
+        "operation": "get",
+        "tableId": "invoices",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "customer_phone",
+              "keyValue": "={{ $json.phone }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        464
+      ],
+      "id": "a36414ed-0a3c-4083-b940-b64b61e937a7",
+      "name": "Get a row in Supabase",
+      "notesInFlow": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "maxTokens": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1840,
+        416
+      ],
+      "id": "74487ede-9342-4ac1-a140-363fa5c9525b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "x0jCibJhs7iCvCub",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v25.0/1043698878825811/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"recipient_type\": \"individual\",\n  \"to\": \"{{ $('Message Extractor').item.json.phone }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"preview_url\": false,\n    \"body\": \"{{ $('Sanitize Reply').item.json.finalReply }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        3152,
+        496
+      ],
+      "id": "b8121b29-734c-40c9-b6c7-15941ad73b76",
+      "name": "HTTP Request1",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cs0O7hCKJfRx3vs0",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "let reply = '';\n\ntry {\n  reply = $input.first().json.finalReply || '';\n} catch(e) {\n  reply = '';\n}\n\n// Remove bad control characters\nreply = reply\n  .replace(/[\\u0000-\\u0008\\u000B\\u000C\\u000E-\\u001F\\u007F]/g, '')\n  .replace(/\\r\\n/g, ' ')   // replace newlines with space\n  .replace(/\\r/g,   ' ')   // replace carriage return with space\n  .replace(/\\n/g,   ' ')   // replace all newlines with space\n  .replace(/\\t/g,   ' ')   // replace tabs with space\n  .replace(/\\s+/g,  ' ')   // collapse multiple spaces into one\n  .replace(/\"/g,    \"'\")   // replace double quotes with single quotes\n  .replace(/\\\\/g,   '')    // remove backslashes\n  .trim();\n\n// Fallback if empty\nif (!reply || reply.length === 0) {\n  reply = 'Thank you for your message! How can I help you today?';\n}\n\n// Clean phone number\nlet phone = '';\ntry {\n  phone = ($('Build AI Context').first().json.phone || '')\n    .toString()\n    .replace(/\\+/g, '')\n    .replace(/\\s/g, '')\n    .replace(/-/g,  '')\n    .trim();\n} catch(e) {\n  phone = '';\n}\n\n// Verify it is truly single line\nconst isSingleLine = !reply.includes('\\n') && !reply.includes('\\r');\n\nreturn [{\n  json: {\n    phone:          phone,\n    name:           $('Build AI Context').first().json.name           || '',\n    message:        $('Build AI Context').first().json.message       || '',\n    history:        $('Build AI Context').first().json.history        || '',\n    productContext: $('Build AI Context').first().json.productContext || '',\n    finalReply:     reply,\n    isSingleLine:   isSingleLine\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2944,
+        496
+      ],
+      "id": "481e4286-c1cd-493d-978b-f82884f51de9",
+      "name": "Sanitize Reply"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "4BFqPJTsbbcC0lNF",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/4BFqPJTsbbcC0lNF",
+          "cachedResultName": "WF2 - Dr Apple CEO Command Center"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        496,
+        -128
+      ],
+      "id": "574ebe73-2fc7-4c2a-a731-76f4a0593b82",
+      "name": "Call 'WF2 - Dr Apple CEO Command Center'"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "phone",
+              "value": "={{ $('Message Extractor').item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "name",
+              "value": "={{ $('Message Extractor').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "message",
+              "value": "={{ $('Message Extractor').item.json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "msg_id",
+              "value": "={{ $('Message Extractor').item.json.msg_id }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "msg_type",
+              "value": "={{ $('Message Extractor').item.json.msg_type }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "timestamp",
+              "value": "={{ $('Message Extractor').item.json.timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "msgLower",
+              "value": "={{ $('Message Extractor').item.json.msgLower }}",
+              "type": "string"
+            },
+            {
+              "id": "a8",
+              "name": "wa_biz_id",
+              "value": "={{ $('Message Extractor').item.json.wa_biz_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "66136ae9-fadd-48f2-b06c-499c68bb646a",
+      "name": "Message Extractor1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        -80
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "phone",
+              "value": "={{ $('Message Extractor').item.json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "name",
+              "value": "={{ $('Message Extractor').item.json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "message",
+              "value": "={{ $('Message Extractor').item.json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "msgLower",
+              "value": "={{ $('Message Extractor').item.json.msgLower }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7dc9cb74-5a44-4abf-b6d5-d63702a10e07",
+      "name": "Normalize Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -960,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "customers",
+        "returnAll": true,
+        "filterType": "string"
+      },
+      "id": "8c51a12d-0fce-4357-a2eb-f9faf6891f2f",
+      "name": "Get All Customers",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        1184
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "products",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "in_stock=eq.true"
+      },
+      "id": "b1b70a97-b2dd-4c75-acb2-7ff190a5d6d3",
+      "name": "Get Latest Product",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        1488
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "options": {}
+      },
+      "id": "bcf98bc2-8896-4b90-abfd-3a198aaed17d",
+      "name": "Merge Blast Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        -48,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Separate customers from product\nconst customers = items.filter(i => i.json.phone && !i.json.price);\nconst products  = items.filter(i => i.json.price);\nconst product   = products[0] ? products[0].json : null;\n\nif (!product) {\n  return [{ json: { error: 'No product found', customers: [], product: null } }];\n}\n\nreturn customers.map(c => ({\n  json: {\n    customerPhone: c.json.phone,\n    customerName:  c.json.name || 'Customer',\n    productName:   product.name,\n    productBrand:  product.brand,\n    productPrice:  Number(product.price).toLocaleString(),\n    blastMessage:  'Sannu ' + (c.json.name || 'Customer') + '! Dr. Apple Phone Store has a new arrival: ' + product.name + ' by ' + product.brand + ' for only N' + Number(product.price).toLocaleString() + '. Available now at Farm Centre Market Kano! Reply to order. 🍎'\n  }\n}));"
+      },
+      "id": "5b1a111f-99ea-42b8-a10d-d931653f3f9c",
+      "name": "Build Blast Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        1280
+      ]
+    },
+    {
+      "parameters": {
+        "batchSize": 10,
+        "options": {}
+      },
+      "id": "c0af9b72-3397-48ea-b073-49a2faaac96f",
+      "name": "Loop Over Customers",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        464,
+        1264
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.customerPhone.replace(/\\+/g,'').replace(/\\s/g,''), type: 'text', text: { preview_url: false, body: $json.blastMessage } }) }}",
+        "options": {}
+      },
+      "id": "075b2dea-79aa-4d94-a91f-b37c90dd06a5",
+      "name": "Send Blast DM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        1056
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: 'Blast complete! Product: ' + $('Build Blast Data').item.json.productName + ' sent to all customers.' } }) }}",
+        "options": {}
+      },
+      "id": "a032cdad-5435-4aa4-9fc3-ca78161ec581",
+      "name": "Confirm Blast to CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        1312
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "YOUR_ANTHROPIC_API_KEY"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 500, messages: [{ role: 'user', content: 'Parse this invoice command and return ONLY valid JSON, no markdown, no extra text: ' + $json.message + ' Return this exact format: {\"customer_name\":\"\",\"items\":[{\"product\":\"\",\"qty\":1,\"unit_price\":0,\"subtotal\":0}],\"total\":0}' }] }) }}",
+        "options": {}
+      },
+      "id": "84bbbe92-951d-4b8a-ad7b-cbe29a291325",
+      "name": "Parse Invoice Command",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -128,
+        1488
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const response = $input.item.json;\nconst text = response.content[0].text;\nconst clean = text.replace(/```json|```/g, '').trim();\n\nlet parsed;\ntry {\n  parsed = JSON.parse(clean);\n} catch(e) {\n  parsed = { customer_name: 'Unknown', items: [], total: 0 };\n}\n\nreturn {\n  json: {\n    ceoPhone:     $('Normalize Message').item.json.phone,\n    customerName: parsed.customer_name || 'Unknown',\n    items:        parsed.items         || [],\n    total:        parsed.total         || 0,\n    parsedInvoice: parsed\n  }\n};"
+      },
+      "id": "0f7e9505-6702-464c-b9cd-a78c6bf660d4",
+      "name": "Extract Invoice Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        32,
+        1600
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "customers",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=name=ilike.*{{ $json.customerName }}*"
+      },
+      "id": "5a98714c-5d96-4826-8ef9-f84eab46d48c",
+      "name": "Lookup Customer",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        272,
+        1616
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "inv",
+        "dataToSend": "=defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "name",
+              "fieldValue": "={{ $('Parse Invoice Command1').item.json.customerName }}"
+            },
+            {
+              "fieldId": "product",
+              "fieldValue": "={{ $('Parse Invoice Command1').item.json.items[0].product }}"
+            },
+            {
+              "fieldId": "qty",
+              "fieldValue": "={{ $('Parse Invoice Command1').item.json.items[0].qty }}"
+            },
+            {
+              "fieldId": "unit_price",
+              "fieldValue": "={{ $('Parse Invoice Command1').item.json.items[0].unit_price }}"
+            },
+            {
+              "fieldId": "sub_total",
+              "fieldValue": "={{ $('Parse Invoice Command1').item.json.items[0].subtotal }}"
+            },
+            {
+              "fieldId": "total",
+              "fieldValue": "={{ $('Parse Invoice Command1').item.json.total }}"
+            }
+          ]
+        }
+      },
+      "id": "f1c70679-2ecc-4035-9413-98e3a538e54e",
+      "name": "Insert Invoice",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        432,
+        1616
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "LARnJdvr4uXpnZch",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const inv    = $('Extract Invoice Data').item.json;\nconst cust   = $('Lookup Customer').item.json;\nconst stored = $('Insert Invoice').item.json;\n\nconst items  = inv.items || [];\nconst lines  = items.map(i =>\n  i.product + ' x' + i.qty + ' - N' + Number(i.unit_price).toLocaleString() + ' = N' + Number(i.subtotal).toLocaleString()\n).join(' | ');\n\nconst today  = new Date().toLocaleDateString('en-NG');\nconst invoiceMsg = 'INVOICE - Dr. Apple Phone Store Farm Centre Market Kano | Customer: ' + (cust.name || inv.customerName) + ' | Date: ' + today + ' | Items: ' + lines + ' | TOTAL: N' + Number(inv.total).toLocaleString() + ' | Status: Unpaid | Thank you for choosing Dr. Apple! 🍎';\nconst ceoMsg = 'Invoice created and sent to ' + (cust.name || inv.customerName) + ' Total: N' + Number(inv.total).toLocaleString();\n\nreturn {\n  json: {\n    customerPhone: cust.phone || '',\n    ceoPhone:      inv.ceoPhone || 'CEO_PHONE_NUMBER',\n    invoiceMsg:    invoiceMsg,\n    ceoMsg:        ceoMsg\n  }\n};"
+      },
+      "id": "17fc167e-3b3e-4883-ae79-9c6522e4bb40",
+      "name": "Send Invoice to Customer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        1440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.customerPhone.replace(/\\+/g,'').replace(/\\s/g,''), type: 'text', text: { preview_url: false, body: $json.invoiceMsg } }) }}",
+        "options": {}
+      },
+      "id": "bf8d78d1-1670-47c5-93ad-8c26f03ce3e7",
+      "name": "HTTP Send Invoice Customer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1488,
+        1536
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: $('Send Invoice to Customer').item.json.ceoMsg } }) }}",
+        "options": {}
+      },
+      "id": "6860d8d2-78e8-4e70-aebe-df3f147c8e0d",
+      "name": "HTTP Confirm Invoice CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1552,
+        1872
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "customerName",
+              "value": "={{ $json.message.replace(/resend invoice/gi, '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "ceoPhone",
+              "value": "={{ $json.phone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4bb096b2-9820-47e4-bf5a-80999f807e94",
+      "name": "Extract Resend Name",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        304,
+        2128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "invoices",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=customer_phone=eq.{{ $('Lookup Customer For Resend').item.json.phone }}"
+      },
+      "id": "8125983e-9038-46af-874d-52cbe22b207c",
+      "name": "Fetch Latest Invoice",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        752,
+        2128
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "customers",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=name=ilike.*{{ $json.customerName }}*"
+      },
+      "id": "f82b4568-628a-4bdf-9dad-91530a7558db",
+      "name": "Lookup Customer For Resend",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        528,
+        2128
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const inv    = $input.item.json;\nconst cust   = $('Lookup Customer For Resend').item.json;\nconst ceoPhone = $('Extract Resend Name').item.json.ceoPhone;\n\nlet items = [];\ntry { items = JSON.parse(inv.items || '[]'); } catch(e) {}\n\nconst lines = items.map(i =>\n  i.product + ' x' + i.qty + ' - N' + Number(i.unit_price).toLocaleString()\n).join(' | ');\n\nconst today   = new Date().toLocaleDateString('en-NG');\nconst invoiceMsg = 'INVOICE (Resent) - Dr. Apple Phone Store | Customer: ' + (cust.name || 'Customer') + ' | Date: ' + today + ' | Items: ' + lines + ' | TOTAL: N' + Number(inv.total).toLocaleString() + ' | Status: ' + (inv.status || 'unpaid') + ' | Dr. Apple Phone Store Farm Centre Market Kano 🍎';\n\nreturn {\n  json: {\n    customerPhone: cust.phone || '',\n    ceoPhone:      ceoPhone,\n    invoiceMsg:    invoiceMsg,\n    ceoMsg:        'Invoice resent to ' + (cust.name || 'customer') + ' - N' + Number(inv.total).toLocaleString()\n  }\n};"
+      },
+      "id": "a7761c80-578d-4bdc-9d2a-fbc85c35005e",
+      "name": "Format Resend Invoice",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        2128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.customerPhone.replace(/\\+/g,'').replace(/\\s/g,''), type: 'text', text: { preview_url: false, body: $json.invoiceMsg } }) }}",
+        "options": {}
+      },
+      "id": "da261e2f-d223-40be-b140-1521c06cd8a1",
+      "name": "Send Resend Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1232,
+        2128
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: $('Format Resend Invoice').item.json.ceoMsg } }) }}",
+        "options": {}
+      },
+      "id": "009586c5-46a3-4bdc-b24f-9bc4273bdac7",
+      "name": "Confirm Resend CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1520,
+        2128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "requests",
+        "limit": 20,
+        "filterType": "string",
+        "filterString": "status=in.(open,escalated,ceo_notified)"
+      },
+      "id": "56704721-344e-4d77-ba4e-83ffb7001b3a",
+      "name": "Fetch Open Requests",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        832,
+        2416
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const reqs = $input.all();\nconst emoji = { open: 'yellow_circle', escalated: 'red_circle', ceo_notified: 'bell' };\n\nconst lines = reqs.map((r, i) => {\n  const s = r.json.status || 'open';\n  const e = s === 'escalated' ? '[ESCALATED]' : s === 'ceo_notified' ? '[CEO NOTIFIED]' : '[OPEN]';\n  return (i+1) + '. ' + e + ' ' + (r.json.customer_name || 'Unknown') + ' | ' + (r.json.request_type || 'N/A') + ' | Product: ' + (r.json.product_interest || 'N/A') + ' | Lang: ' + (r.json.language_detected || 'N/A');\n}).join(' --- ');\n\nconst report = 'OPEN REQUESTS REPORT - Dr. Apple (' + reqs.length + ' total) --- ' + (lines || 'No open requests at this time.');\n\nreturn [{\n  json: {\n    report:    report,\n    ceoPhone:  $('Normalize Message').item.json.phone,\n    count:     reqs.length\n  }\n}];"
+      },
+      "id": "aef68e4b-1f6b-41f0-a4de-bb49aaf5ac30",
+      "name": "Format Requests Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1056,
+        2416
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: $json.report } }) }}",
+        "options": {}
+      },
+      "id": "894d2774-9145-4565-ad6e-b7f98d7a22cd",
+      "name": "Send Requests Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1280,
+        2416
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_config",
+        "filterType": "string",
+        "filterString": "key=eq.agent_active",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "value",
+              "fieldValue": "false"
+            }
+          ]
+        }
+      },
+      "id": "b4f2190f-4ab1-4397-ba89-95ada85dcf01",
+      "name": "Pause Agent DB",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        2880
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: 'Malam AI is now PAUSED. No customer responses will be sent. Type resume agent to reactivate.' } }) }}",
+        "options": {}
+      },
+      "id": "373af681-b078-4363-a958-ef222da15d30",
+      "name": "Confirm Pause to CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1744,
+        2880
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "agent_config",
+        "filterType": "string",
+        "filterString": "key=eq.agent_active",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "value",
+              "fieldValue": "true"
+            }
+          ]
+        }
+      },
+      "id": "22b3daaf-85ea-4091-abe3-4d4306d8d71b",
+      "name": "Resume Agent DB",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1760,
+        3120
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: 'Malam AI is now ACTIVE! Responding to all customers again. Dr. Apple Phone Store is open for business! 🍎' } }) }}",
+        "options": {}
+      },
+      "id": "2ab14e85-fbdc-4cc3-b04a-8a5bd5acd927",
+      "name": "Confirm Resume to CEO",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2368,
+        3072
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "requests",
+        "filterType": "string",
+        "filterString": "request_type=eq.buy_intent&created_at=gte.{{ new Date(new Date().setHours(0,0,0,0)).toISOString() }}"
+      },
+      "id": "c1e65a86-a468-4a73-b052-3e7067bdc6e9",
+      "name": "Fetch Orders Today",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1984,
+        3312
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const orders = $input.all();\nconst lines  = orders.map((o, i) =>\n  (i+1) + '. ' + (o.json.customer_name || 'Unknown') + ' (+' + (o.json.customer_phone || '') + ') | Product: ' + (o.json.product_interest || 'N/A') + ' | Lang: ' + (o.json.language_detected || 'N/A')\n).join(' --- ');\n\nconst today  = new Date().toLocaleDateString('en-NG');\nconst report = 'TODAYS ORDERS (' + orders.length + ') - ' + today + ' --- ' + (lines || 'No orders recorded today yet.');\n\nreturn [{ json: { report: report, count: orders.length } }];"
+      },
+      "id": "1da9fd65-f2a5-43b8-9bb5-c041509a4bff",
+      "name": "Format Orders Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2208,
+        3312
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: $json.report } }) }}",
+        "options": {}
+      },
+      "id": "2e3e0d01-e851-400f-bc77-5e3e2d0772c8",
+      "name": "Send Orders Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2416,
+        3280
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "requests",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "status=eq.ceo_notified"
+      },
+      "id": "0260243b-1174-4d1e-81b1-3e97af9621b3",
+      "name": "Fetch Pending Stock Alert",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2208,
+        3504
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const pending     = $('Fetch Pending Stock Alert').item.json;\nconst ceoMsg      = $('Normalize Message').item.json.message;\nconst availDate   = ceoMsg.replace(/available/gi, '').trim();\nconst customerMsg = 'Great news! The ' + (pending.product_interest || 'item') + ' you asked about will be available ' + availDate + '. We will notify you when it arrives! Would you like to pre-order? Dr. Apple Phone Store 🍎';\n\nreturn {\n  json: {\n    customerPhone: pending.customer_phone || '',\n    requestId:     pending.id            || '',\n    customerMsg:   customerMsg,\n    ceoConfirm:    'Customer ' + (pending.customer_name || '') + ' notified: ' + (pending.product_interest || 'item') + ' available ' + availDate\n  }\n};"
+      },
+      "id": "27c5550f-60c9-46fe-957e-ac01e49fb27c",
+      "name": "Notify Customer Available",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2656,
+        3312
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.customerPhone.replace(/\\+/g,'').replace(/\\s/g,''), type: 'text', text: { preview_url: false, body: $json.customerMsg } }) }}",
+        "options": {}
+      },
+      "id": "171340d5-c752-4d05-ad4b-8f9f79528f7f",
+      "name": "Send Available to Customer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2880,
+        3312
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "requests",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $('Notify Customer Available').item.json.requestId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "resolved"
+            },
+            {
+              "fieldId": "ceo_response",
+              "fieldValue": "={{ $('Normalize Message').item.json.message }}"
+            }
+          ]
+        }
+      },
+      "id": "2a4f92b2-db8c-4eca-ad48-b9a85c725aa6",
+      "name": "Update Available Request",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3104,
+        3312
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "suggestedProduct",
+              "value": "={{ $('Normalize Message').item.json.message.replace(/suggest/gi, '').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "customerPhone",
+              "value": "={{ $('Fetch Pending Stock Alert').item.json.customer_phone }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "requestId",
+              "value": "={{ $('Fetch Pending Stock Alert').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "customerName",
+              "value": "={{ $('Fetch Pending Stock Alert').item.json.customer_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9be52919-58ff-4187-8e8a-d93dad00dd24",
+      "name": "Extract Suggested Product",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2880,
+        3504
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "products",
+        "limit": 1,
+        "filterType": "string",
+        "filterString": "=name=ilike.*{{ $json.suggestedProduct }}*&in_stock=eq.true"
+      },
+      "id": "7305fb3d-7445-48c2-a885-8ad6b869104c",
+      "name": "Lookup Suggested Product",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3104,
+        3504
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const product     = $input.item.json;\nconst exData      = $('Extract Suggested Product').item.json;\nconst pending     = $('Fetch Pending Stock Alert').item.json;\n\nconst msg = 'While ' + (pending.product_interest || 'the item') + ' is out of stock, our store owner recommends: ' + (product.name || 'N/A') + ' by ' + (product.brand || 'N/A') + ' for N' + Number(product.price || 0).toLocaleString() + '. Colors: ' + (product.color || 'N/A') + ' | Storage: ' + (product.memory || 'N/A') + '. In Stock and ready for pickup! Would you like this one? Dr. Apple 🍎';\n\nreturn {\n  json: {\n    customerPhone: exData.customerPhone || '',\n    requestId:     exData.requestId     || '',\n    msg:           msg\n  }\n};"
+      },
+      "id": "86dc1426-531f-49d9-abb9-d896b9b2b43d",
+      "name": "Send Suggestion to Customer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3328,
+        3504
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.customerPhone.replace(/\\+/g,'').replace(/\\s/g,''), type: 'text', text: { preview_url: false, body: $json.msg } }) }}",
+        "options": {}
+      },
+      "id": "2936799c-960e-411b-a0cb-70f00676f181",
+      "name": "HTTP Send Suggestion",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3552,
+        3504
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const pending = $('Fetch Pending Stock Alert').item.json;\n\nreturn {\n  json: {\n    customerPhone: pending.customer_phone || '',\n    requestId:     pending.id            || '',\n    customerMsg:   'One moment please! Our store owner is personally stepping in to assist you with ' + (pending.product_interest || 'your request') + '. You will hear from them shortly! Dr. Apple Phone Store 🍎',\n    ceoMsg:        'You are now handling this customer directly. Name: ' + (pending.customer_name || 'Unknown') + ' | WhatsApp: +' + (pending.customer_phone || '') + ' | Wanted: ' + (pending.product_interest || 'N/A') + '. Malam AI will not respond to this customer.'\n  }\n};"
+      },
+      "id": "8a658451-9808-43e4-b1e4-4ca281eaaff1",
+      "name": "Handle Take Over",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2880,
+        3696
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: $json.customerPhone.replace(/\\+/g,'').replace(/\\s/g,''), type: 'text', text: { preview_url: false, body: $json.customerMsg } }) }}",
+        "options": {}
+      },
+      "id": "98c2cfec-4061-4d7d-88be-019ae8aaddde",
+      "name": "Notify Customer Takeover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3104,
+        3696
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: $('Handle Take Over').item.json.ceoMsg } }) }}",
+        "options": {}
+      },
+      "id": "bf8899da-9588-42ac-a974-e708a3082cdb",
+      "name": "Notify CEO Takeover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3328,
+        3696
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "requests",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $('Handle Take Over').item.json.requestId }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "status",
+              "fieldValue": "ceo_handling"
+            },
+            {
+              "fieldId": "ceo_response",
+              "fieldValue": "take_over"
+            }
+          ]
+        }
+      },
+      "id": "4fe15406-7ff3-4dbb-aa07-2a54287fbacf",
+      "name": "Update Takeover Request",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3552,
+        3696
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messaging_product: 'whatsapp', recipient_type: 'individual', to: 'CEO_PHONE_NUMBER', type: 'text', text: { preview_url: false, body: 'Command not recognised. Available commands: blast new product | generate invoice [name] - [product] N[amount] | resend invoice [name] | check requests | pause agent | resume agent | orders today | Available [date] | Suggest [product] | take over' } }) }}",
+        "options": {}
+      },
+      "id": "2dc723b8-7182-497a-af7e-12bac015fe5e",
+      "name": "Send Help Menu",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2208,
+        3696
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "r1",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "blast",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "833057da-0d07-4b74-bdf9-607d82e4fb72",
+      "name": "Is Blast?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -736,
+        1296
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "r2",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "/invoice_gen",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "77fd3787-50aa-4563-a150-6aaa4a7a66dc",
+      "name": "Is Generate Invoice?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -496,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "r3",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "resend invoice",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1dd69425-92bc-4c63-9024-9945fd631b3d",
+      "name": "Is Resend Invoice?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "r4",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "check requests",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b43428df-8bc7-491d-be9c-1e2f0349b6ab",
+      "name": "Is Check Requests?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        512,
+        2432
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "r5",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "pause agent",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "2964ea40-e9d3-44f9-8ebc-cd06d31d8381",
+      "name": "Is Pause Agent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        2672
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "r6",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "resume agent",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "90462049-d6f9-426e-9a74-724d788a1c07",
+      "name": "Is Resume Agent?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        3408
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "r7",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "orders today",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8294a5e1-59a3-4d22-a82e-7ad8fb223d1a",
+      "name": "Is Orders Today?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        3504
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "r8a",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "available",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "r8b",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "suggest",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "r8c",
+              "leftValue": "={{ $json.msgLower }}",
+              "rightValue": "take over",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "id": "dc3ae72a-b2db-49bb-9133-aed24706b438",
+      "name": "Is Stock Reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        3600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "s1",
+              "leftValue": "={{ $('Normalize Message').item.json.msgLower }}",
+              "rightValue": "available",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "67b296a8-1e46-464f-b3f8-3d1bfe2a39af",
+      "name": "Is Available Reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2432,
+        3504
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "s2",
+              "leftValue": "={{ $('Normalize Message').item.json.msgLower }}",
+              "rightValue": "suggest",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f71a4a08-4b01-47d8-8f0e-a8c4437593fb",
+      "name": "Is Suggest Reply?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2656,
+        3600
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ── GET DATA FROM CORRECT SOURCE NODES ───────────────────────\n// Try multiple sources in case node names differ\nconst parseNode   = $('Parse Invoice Command').item.json;\nconst lookupNode  = $('Lookup Customer').item.json;\n\nconst inv  = parseNode;\nconst cust = lookupNode;\n\n// ── SAFE ITEMS PARSER ─────────────────────────────────────────\n// Handles array, JSON string, object, undefined\nfunction parseItems(raw) {\n  if (!raw) return [];\n\n  // Already a proper array\n  if (Array.isArray(raw)) return raw;\n\n  // JSON string\n  if (typeof raw === 'string') {\n    try {\n      const parsed = JSON.parse(raw);\n      if (Array.isArray(parsed)) return parsed;\n      if (typeof parsed === 'object') return Object.values(parsed);\n    } catch(e) {}\n    return [];\n  }\n\n  // Plain object (keyed by index)\n  if (typeof raw === 'object') {\n    return Object.values(raw);\n  }\n\n  return [];\n}\n\n// Try itemsJson first (guaranteed string), then items\nconst items = parseItems(inv.itemsJson) || parseItems(inv.items) || [];\n\n// ── INVOICE META ──────────────────────────────────────────────\nconst today      = new Date().toLocaleDateString('en-NG', {\n  day: '2-digit', month: 'long', year: 'numeric'\n});\nconst invoiceNum = 'INV-' + Date.now().toString().slice(-6);\nconst total      = Number(inv.total || 0);\n\n// ── BUILD ITEM ROWS ───────────────────────────────────────────\nlet itemRows = '';\n\nif (items.length > 0) {\n  itemRows = items.map(item => {\n    const product    = item.product    || item.name        || 'N/A';\n    const qty        = item.qty        || item.quantity    || 1;\n    const unit_price = Number(item.unit_price || item.price || 0);\n    const subtotal   = Number(item.subtotal   || (qty * unit_price) || 0);\n\n    return `\n      <tr>\n        <td style=\"padding:10px 12px;font-size:13px;border-bottom:1px solid #eee;\">${product}</td>\n        <td style=\"padding:10px 12px;font-size:13px;border-bottom:1px solid #eee;text-align:center;\">${qty}</td>\n        <td style=\"padding:10px 12px;font-size:13px;border-bottom:1px solid #eee;text-align:right;\">&#8358;${unit_price.toLocaleString()}</td>\n        <td style=\"padding:10px 12px;font-size:13px;border-bottom:1px solid #eee;text-align:right;\">&#8358;${subtotal.toLocaleString()}</td>\n      </tr>\n    `;\n  }).join('');\n} else {\n  // Fallback — should never show if parse is correct\n  itemRows = `\n    <tr>\n      <td colspan=\"4\" style=\"padding:20px;text-align:center;color:#888;font-size:12px;\">\n        No items parsed. Please check command format:<br>\n        /invoice_gen Name | Product | Qty | Price\n      </td>\n    </tr>\n  `;\n}\n\n// ── BUILD FULL HTML ───────────────────────────────────────────\nconst html = `<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<style>\n  * { margin:0; padding:0; box-sizing:border-box; }\n  body { font-family:Arial,sans-serif; font-size:13px; color:#1a1a1a; padding:40px; background:#fff; }\n  .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:36px; padding-bottom:20px; border-bottom:3px solid #1a1a1a; }\n  .store-name { font-size:22px; font-weight:bold; }\n  .store-info { font-size:11px; color:#555; margin-top:6px; line-height:1.7; }\n  .inv-label h2 { font-size:30px; font-weight:bold; color:#c0392b; letter-spacing:2px; text-align:right; }\n  .inv-label p { font-size:11px; color:#555; text-align:right; margin-top:4px; }\n  .badge { display:inline-block; padding:3px 12px; border-radius:20px; font-size:10px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; background:#fff3cd; color:#856404; border:1px solid #ffc107; margin-top:8px; }\n  .bill-section { display:flex; justify-content:space-between; margin-bottom:28px; }\n  .bill-to h4 { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#888; margin-bottom:6px; }\n  .bill-to p { font-size:13px; font-weight:bold; }\n  .bill-to span { font-size:11px; color:#555; }\n  .meta-table td { padding:3px 8px; font-size:11px; }\n  .meta-table td:first-child { color:#888; }\n  .meta-table td:last-child { font-weight:bold; text-align:right; }\n  .items-table { width:100%; border-collapse:collapse; margin-bottom:24px; }\n  .items-table thead tr { background:#1a1a1a; color:#fff; }\n  .items-table thead th { padding:10px 12px; font-size:11px; letter-spacing:0.5px; text-align:left; }\n  .items-table thead th:nth-child(2) { text-align:center; }\n  .items-table thead th:nth-child(3),\n  .items-table thead th:nth-child(4) { text-align:right; }\n  .items-table tbody tr:nth-child(even) { background:#f9f9f9; }\n  .totals { width:260px; margin-left:auto; margin-bottom:36px; }\n  .totals table { width:100%; border-collapse:collapse; }\n  .totals td { padding:6px 10px; font-size:12px; }\n  .totals td:last-child { text-align:right; }\n  .grand { background:#1a1a1a; color:#fff; font-weight:bold; font-size:14px; }\n  .grand td { padding:10px; }\n  .footer { margin-top:36px; padding-top:18px; border-top:1px solid #eee; text-align:center; font-size:11px; color:#888; line-height:1.8; }\n  .footer strong { color:#1a1a1a; }\n</style>\n</head>\n<body>\n\n<div class=\"header\">\n  <div>\n    <div class=\"store-name\">&#127822; Dr. Apple Phone Store</div>\n    <div class=\"store-info\">\n      Farm Centre Market, Kano, Nigeria<br>\n      WhatsApp: +234XXXXXXXXXX\n    </div>\n  </div>\n  <div class=\"inv-label\">\n    <h2>INVOICE</h2>\n    <p>#${invoiceNum}</p>\n    <p><span class=\"badge\">UNPAID</span></p>\n  </div>\n</div>\n\n<div class=\"bill-section\">\n  <div class=\"bill-to\">\n    <h4>Bill To</h4>\n    <p>${cust.name || inv.customerName || 'Customer'}</p>\n    <span>+${cust.phone || 'N/A'}</span>\n  </div>\n  <div>\n    <table class=\"meta-table\">\n      <tr><td>Invoice No:</td><td>${invoiceNum}</td></tr>\n      <tr><td>Date:</td><td>${today}</td></tr>\n      <tr><td>Due:</td><td>On Pickup</td></tr>\n    </table>\n  </div>\n</div>\n\n<table class=\"items-table\">\n  <thead>\n    <tr>\n      <th>Product / Description</th>\n      <th>Qty</th>\n      <th>Unit Price</th>\n      <th>Subtotal</th>\n    </tr>\n  </thead>\n  <tbody>\n    ${itemRows}\n  </tbody>\n</table>\n\n<div class=\"totals\">\n  <table>\n    <tr>\n      <td style=\"color:#888\">Subtotal</td>\n      <td>&#8358;${total.toLocaleString()}</td>\n    </tr>\n    <tr>\n      <td style=\"color:#888\">Tax (0%)</td>\n      <td>&#8358;0</td>\n    </tr>\n    <tr class=\"grand\">\n      <td>TOTAL</td>\n      <td>&#8358;${total.toLocaleString()}</td>\n    </tr>\n  </table>\n</div>\n\n<div class=\"footer\">\n  <strong>Thank you for choosing Dr. Apple Phone Store!</strong><br>\n  Payment via bank transfer or cash on pickup.<br>\n  Farm Centre Market, Kano, Nigeria<br>\n  This invoice was generated automatically.\n</div>\n\n</body>\n</html>`;\n\nreturn [{\n  json: {\n    invoiceHtml:   html,\n    invoiceNum:    invoiceNum,\n    customerName:  cust.name   || inv.customerName || 'Customer',\n    customerPhone: (cust.phone || '').toString().replace(/\\+/g,'').replace(/\\s/g,''),\n    ceoPhone:      inv.ceoPhone || 'CEO_PHONE_NUMBER',\n    total:         total,\n    itemCount:     items.length,\n    itemsDebug:    items\n  }\n}];\n\nconst items = $input.all().map((item) => item.json);\n\nlet itemRows = '';\n\nif (items.length > 0) {\n\n  itemRows = items.map((item) => {\n\n    const product = item.product || \"N/A\";\n\n    const qty = item.qty || 1;\n\n    const unit_price = Number(item.unit_price || 0);\n\n    const subtotal = Number(item.subtotal || qty * unit_price || 0);\n\n    return {\n\n      product,\n\n      qty,\n\n      unit_price,\n\n      subtotal,\n\n    };\n\n  });\n\n}\n\nreturn { itemRows };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        1712
+      ],
+      "id": "8d111340-9af0-4f06-9a49-2871d32377ac",
+      "name": "Build Invoice HTML",
+      "notesInFlow": false,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the HTML from previous node\nconst html = $input.first().json.invoiceHtml || '';\n\n// Convert HTML to base64 using btoa() — works in n8n Code node\n// Buffer is NOT available in n8n — use btoa() instead\nconst encoded = btoa(unescape(encodeURIComponent(html)));\n\nreturn [{\n  json: {\n    invoiceHtml:   html,\n    htmlBase64:    encoded,\n    invoiceNum:    $input.first().json.invoiceNum    || '',\n    customerName:  $input.item.json.customerName  || '',\n    customerPhone: $input.item.json.customerPhone || '',\n    ceoPhone:      $input.item.json.ceoPhone      || 'CEO_PHONE_NUMBER',\n    total:         $input.item.json.total         || 0,\n    pdfReady:      true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        1520
+      ],
+      "id": "21c90d42-4d9d-4a83-8180-8fbeb93eeb3c",
+      "name": "Generate PDF"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://v2.api2pdf.com/chrome/html",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "5c5f9b02-7a12-4dfc-849a-63fe8c2e360d"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({\n  html: $json.invoiceHtml,\n  inline: false,\n  fileName: \"DrApple_Invoice_\" + $json.invoiceNum + \".pdf\",\n  options: {\n    landscape: false,\n    printBackground: true,\n    format: \"A4\",\n    margin: {\n      top: \"20px\",\n      right: \"20px\",\n      bottom: \"20px\",\n      left: \"20px\"\n    }\n  }\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        912,
+        1712
+      ],
+      "id": "8c4bf798-9b58-4f77-8f06-969ce5db99d3",
+      "name": "Convert to PDF"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "41838093-9e80-44a1-9682-939c177a40e3",
+              "name": "pdfUrl",
+              "value": "={{ $json.pdf }}",
+              "type": "string"
+            },
+            {
+              "id": "77ecdd48-51bc-40a5-8419-ff14591d5c1c",
+              "name": "invoiceNum",
+              "value": "={{ $('Build Invoice HTML').item.json.invoiceNum }}",
+              "type": "string"
+            },
+            {
+              "id": "fb5a0a63-19e7-4234-9be4-cfe23d8b590d",
+              "name": "customerName",
+              "value": "={{ $('Build Invoice HTML').item.json.customerName }}",
+              "type": "string"
+            },
+            {
+              "id": "227f1c64-c910-4180-a656-1753301bd3b8",
+              "name": "total",
+              "value": "={{ $('Build Invoice HTML').item.json.total }}",
+              "type": "string"
+            },
+            {
+              "id": "bfadac20-e2ae-426e-b0d8-296b149e6521",
+              "name": "ceoPhone",
+              "value": "={{ $('Build Invoice HTML').item.json.ceoPhone }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1232,
+        1712
+      ],
+      "id": "eb0ea132-28c1-49a0-87cb-0769a5be9311",
+      "name": "Extract PDF URL"
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1536,
+        1296
+      ],
+      "id": "31692869-0d95-4c1d-ae47-f7e448ac0d9b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "87159fd6-dc33-4046-b291-91f8f8234301",
+              "leftValue": "={{ $json.parseError }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -48,
+        1712
+      ],
+      "id": "605e58d1-2dc5-4809-a2e9-75f97855c60d",
+      "name": "Parse OK?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// CEO types:\n// /invoice_gen Aminu Musa | iPhone 15 256GB | 1 | 750000\n// /invoice_gen Fatima | MacBook Air M3 | 1 | 1200000 | Case | 1 | 5000\n\nconst raw = $('Is Blast?').first().json.message || '';\nconst ceoPhone = $('Is Blast?').first().json.phone;\n\n// Remove the command prefix\nconst body = raw.replace(/\\/invoice_gen/i, '').trim();\n\n// Split by pipe\nconst parts = body.split('|').map(p => p.trim());\n\nif (parts.length < 4) {\n  return [{\n    json: {\n      parseError: true,\n      errorMsg: 'Wrong format. Use: /invoice_gen Customer Name | Product | Qty | Price',\n      ceoPhone: ceoPhone,\n      customerName: '',\n      items: [],\n      total: 0\n    }\n  }];\n}\n\n// First part is always customer name\nconst customerName = parts[0];\n\n// Remaining parts are groups of: product | qty | price\nconst items = [];\nlet total = 0;\n\n// Parse items in groups of 3\nfor (let i = 1; i < parts.length; i += 3) {\n  const product   = parts[i]   || 'Unknown';\n  const qty       = parseInt(parts[i+1]) || 1;\n  const unitPrice = parseFloat((parts[i+2] || '0').replace(/,/g, '')) || 0;\n  const subtotal  = qty * unitPrice;\n  total += subtotal;\n\n  items.push({\n    product:    product,\n    qty:        qty,\n    unit_price: unitPrice,\n    subtotal:   subtotal\n  });\n}\n\nreturn [{\n  json: {\n    parseError:   false,\n    ceoPhone:     ceoPhone,\n    customerName: customerName,\n    items:        items,\n    total:        total\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -256,
+        1712
+      ],
+      "id": "a973038c-ccdd-4c48-bfd1-c8f2abdf4113",
+      "name": "Parse Invoice Command1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v19.0/YOUR_PHONE_NUMBER_ID/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "=// Body:\n={{ JSON.stringify({\n  messaging_product: \"whatsapp\",\n  recipient_type: \"individual\",\n  to: $('Parse Invoice Command').item.json.ceoPhone.replace(/\\+/g,'').replace(/\\s/g,''),\n  type: \"text\",\n  text: {\n    preview_url: false,\n    body: \"❌ Invoice format error: \" + $json.errorMsg + \"\\n\\nCorrect format:\\n/invoice_gen Customer Name | Product | Qty | Price\\n\\nExample:\\n/invoice_gen Aminu Musa | iPhone 15 256GB | 1 | 750000\"\n  }\n}) }}",
+        "options": {}
+      },
+      "id": "bb8b4de5-a80b-4c10-908d-c77e55e8193a",
+      "name": "HTTP Confirm Invoice CEO1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        1904
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "cs0O7hCKJfRx3vs0",
+          "name": "Header Auth account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ceo-commands",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1376,
+        1216
+      ],
+      "id": "f3c902eb-e8d8-47b2-a041-00213ed72a62",
+      "name": "Webhook1",
+      "webhookId": "85215959-29e0-4983-9b19-d45ebdb6827d"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Meta Verify Gate": {
+      "main": [
+        [
+          {
+            "node": "Respond Meta Challenge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Extractor": {
+      "main": [
+        [
+          {
+            "node": "Get Agent Config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Agent Config": {
+      "main": [
+        [
+          {
+            "node": "Agent Active Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Active Check": {
+      "main": [
+        [
+          {
+            "node": "CEO Phone Gate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Offline Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CEO Phone Gate": {
+      "main": [
+        [
+          {
+            "node": "Normalize Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Load Conversation Memory",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Conversation Memory": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Product Catalog": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Customer": {
+      "main": [
+        [
+          {
+            "node": "Build AI Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build AI Context": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Detector": {
+      "main": [
+        [
+          {
+            "node": "Tag Parser",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Strip Tags - Clean Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tag Parser": {
+      "main": [
+        [
+          {
+            "node": "Route Tag Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Tag Type": {
+      "main": [
+        [
+          {
+            "node": "Update Request CEO Notify",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Update Request Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Request CEO Notify": {
+      "main": [
+        [
+          {
+            "node": "Send CEO Stock Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send CEO Stock Alert": {
+      "main": [
+        [
+          {
+            "node": "Strip Tags - After Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Request Escalation": {
+      "main": [
+        [
+          {
+            "node": "Notify Sales Rep",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Sales Rep": {
+      "main": [
+        [
+          {
+            "node": "Strip Tags - After Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strip Tags - Clean Reply": {
+      "main": [
+        [
+          {
+            "node": "Sanitize Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Strip Tags - After Escalation": {
+      "main": [
+        [
+          {
+            "node": "Merge Paths",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Paths": {
+      "main": [
+        []
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Message Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Upsert Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Load Product Catalog",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Format Products": {
+      "main": [
+        []
+      ]
+    },
+    "Get a row in Supabase": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "search_products": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Escalation Detector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sanitize Reply": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Save Memory - User",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save Memory - Assistant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message Extractor1": {
+      "main": [
+        [
+          {
+            "node": "Call 'WF2 - Dr Apple CEO Command Center'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Message": {
+      "main": [
+        [
+          {
+            "node": "Is Blast?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get All Customers": {
+      "main": [
+        [
+          {
+            "node": "Merge Blast Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Latest Product": {
+      "main": [
+        [
+          {
+            "node": "Merge Blast Data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Blast Data": {
+      "main": [
+        [
+          {
+            "node": "Build Blast Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Blast Data": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Customers": {
+      "main": [
+        [
+          {
+            "node": "Send Blast DM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirm Blast to CEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Blast DM": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Customers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Customer": {
+      "main": [
+        []
+      ]
+    },
+    "Insert Invoice": {
+      "main": [
+        []
+      ]
+    },
+    "Extract Resend Name": {
+      "main": [
+        [
+          {
+            "node": "Lookup Customer For Resend",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Customer For Resend": {
+      "main": [
+        [
+          {
+            "node": "Fetch Latest Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Latest Invoice": {
+      "main": [
+        [
+          {
+            "node": "Format Resend Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Resend Invoice": {
+      "main": [
+        [
+          {
+            "node": "Send Resend Invoice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Resend Invoice": {
+      "main": [
+        [
+          {
+            "node": "Confirm Resend CEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Open Requests": {
+      "main": [
+        [
+          {
+            "node": "Format Requests Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Requests Report": {
+      "main": [
+        [
+          {
+            "node": "Send Requests Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pause Agent DB": {
+      "main": [
+        [
+          {
+            "node": "Confirm Pause to CEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resume Agent DB": {
+      "main": [
+        [
+          {
+            "node": "Confirm Resume to CEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Orders Today": {
+      "main": [
+        [
+          {
+            "node": "Format Orders Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Orders Report": {
+      "main": [
+        [
+          {
+            "node": "Send Orders Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Pending Stock Alert": {
+      "main": [
+        [
+          {
+            "node": "Is Available Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Customer Available": {
+      "main": [
+        [
+          {
+            "node": "Send Available to Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Available to Customer": {
+      "main": [
+        [
+          {
+            "node": "Update Available Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Suggested Product": {
+      "main": [
+        [
+          {
+            "node": "Lookup Suggested Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lookup Suggested Product": {
+      "main": [
+        [
+          {
+            "node": "Send Suggestion to Customer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Suggestion to Customer": {
+      "main": [
+        [
+          {
+            "node": "HTTP Send Suggestion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Handle Take Over": {
+      "main": [
+        [
+          {
+            "node": "Notify Customer Takeover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify Customer Takeover": {
+      "main": [
+        [
+          {
+            "node": "Notify CEO Takeover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Notify CEO Takeover": {
+      "main": [
+        [
+          {
+            "node": "Update Takeover Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Blast?": {
+      "main": [
+        [
+          {
+            "node": "Get All Customers",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Latest Product",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Generate Invoice?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Generate Invoice?": {
+      "main": [
+        [
+          {
+            "node": "Parse Invoice Command1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Resend Invoice?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Resend Invoice?": {
+      "main": [
+        [
+          {
+            "node": "Extract Resend Name",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Check Requests?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Check Requests?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Open Requests",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Pause Agent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Pause Agent?": {
+      "main": [
+        [
+          {
+            "node": "Pause Agent DB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Resume Agent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Resume Agent?": {
+      "main": [
+        [
+          {
+            "node": "Resume Agent DB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Orders Today?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Orders Today?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Orders Today",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Stock Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Stock Reply?": {
+      "main": [
+        [
+          {
+            "node": "Fetch Pending Stock Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Help Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Available Reply?": {
+      "main": [
+        [
+          {
+            "node": "Notify Customer Available",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Is Suggest Reply?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Suggest Reply?": {
+      "main": [
+        [
+          {
+            "node": "Extract Suggested Product",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Take Over",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Invoice HTML": {
+      "main": [
+        [
+          {
+            "node": "Convert to PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate PDF": {
+      "main": [
+        []
+      ]
+    },
+    "Convert to PDF": {
+      "main": [
+        [
+          {
+            "node": "Extract PDF URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract PDF URL": {
+      "main": [
+        [
+          {
+            "node": "HTTP Send Invoice Customer",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Confirm Invoice CEO",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        []
+      ]
+    },
+    "Parse OK?": {
+      "main": [
+        [
+          {
+            "node": "Build Invoice HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Confirm Invoice CEO1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Invoice Command1": {
+      "main": [
+        [
+          {
+            "node": "Parse OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "all",
+    "saveExecutionProgress": true,
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "67b24542-684e-4438-9cd0-3deae1028ce1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0290c3c04d3c27210eb9d3c5ba5fdc149709656c5303e2be38571735f707fef0"
+  },
+  "id": "fFjyUUNeUcYKfKZb",
+  "tags": [
+    {
+      "updatedAt": "2026-04-15T10:45:21.249Z",
+      "createdAt": "2026-04-15T10:45:21.249Z",
+      "id": "0GOvl1GuoNR241Q6",
+      "name": "Commands"
+    },
+    {
+      "updatedAt": "2026-04-09T08:01:53.017Z",
+      "createdAt": "2026-04-09T08:01:53.017Z",
+      "id": "P9ydLxqiFINdYNTs",
+      "name": "WhatsApp"
+    },
+    {
+      "updatedAt": "2026-04-15T10:45:21.276Z",
+      "createdAt": "2026-04-15T10:45:21.276Z",
+      "id": "PRs9dmq0tTF7v23t",
+      "name": "CEO"
+    },
+    {
+      "updatedAt": "2026-04-09T08:01:53.046Z",
+      "createdAt": "2026-04-09T08:01:53.046Z",
+      "id": "vVizTXKj0ir24KYP",
+      "name": "Sales Agent"
+    }
+  ]
+}
